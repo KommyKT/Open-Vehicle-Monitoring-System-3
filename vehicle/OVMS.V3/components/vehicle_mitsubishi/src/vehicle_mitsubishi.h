@@ -62,6 +62,7 @@ public:
 
 class OvmsVehicleMitsubishi : public OvmsVehicle
 {
+  #define     TRIP_HISTORY_DATA_PATH "/sd/logs/trips.csv"
   public:
     OvmsVehicleMitsubishi();
     ~OvmsVehicleMitsubishi();
@@ -137,6 +138,7 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     OvmsMetricFloat* ms_v_bat_max_output = MyMetrics.InitFloat("xmi.v.bat.max.output", 10, 0, kW);
 
     void vehicle_mitsubishi_car_on(bool isOn);
+    void SaveTripHistory();
 
     int mi_start_time_utc;
 
@@ -157,7 +159,7 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     MI_Trip_Counter mi_park_trip_counter;
     MI_Trip_Counter mi_charge_trip_counter;
 
-    float tripb = 0;
+    float tripb = 0.0;
 
     bool has_odo;
     bool set_odo;
