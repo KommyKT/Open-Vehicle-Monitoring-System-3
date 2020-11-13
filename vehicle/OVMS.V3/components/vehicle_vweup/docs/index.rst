@@ -92,6 +92,7 @@ User notes
 * Configure OVMS as described in the OVMS user manual.
 * Configure 'Model year' and 'Can write access' under VW e-Up (Komfort CAN) -> Features.
 * Register and connect OVMS to a server (as guided within the OVMS setup).
+* Turn the ignition in the car on and off to receive initial values (also needed after updates).
 * Install the OVMS app on your smartphone or tablet and configure it to connect to the server.
 * Enjoy :-)
 
@@ -134,18 +135,19 @@ ID	Conversion	     Unit    Function
 3E3	(d2-100)/2           °C      Cabin temperature      	         	
 527	(d5/2)-50	     °C      Outdoor temperature     	         	
 531	d0 00		             Headlights off
-52D	d0		     km	     Calculated range		     
-470	d1 1,2,4,8,20,10     Integer Status doors, trunk, hood		     
+52D	d0 +255 if d1 41     km	     Calculated range		     
+381     d0 02			     Status doors locked
+470	d1 1,2,4,8,20,10     Integer Doors, trunk, hood opened or closed	
 3E1	d4		     Integer Blower speed? (57,66,7D,98,BB,DE,FA)
 575	d0 00 to 0F 	     Integer Key position		         	
 569	b07			     "AC"-LED
 69C	d1/10+10	     °C      temperature setpoint for remote AC
 				     (only in message D2 <d1> 00 1E 1E 0A 00 00)
-61C	d2 00 or 01	     bool    Charging detection				
+61C	d2 < 07		     bool    Charging detection				
 43D	d1 01 or 11		     TX: Working or sleeping in the ring     	
 5A7	d1 16			     TX: OCU AC blocking signal
 5A9	all 00			     TX: OCU heartbeat
-6E9	multiple msg		     TX: AC on / off signals                 	
+69E	multiple msg		     TX: AC on / off signals                 	
 	d0 C1 d6 xx	     °C      TX: set cabin temperature for 69C       	
 ======= ==================== ======= ===========================================
 
