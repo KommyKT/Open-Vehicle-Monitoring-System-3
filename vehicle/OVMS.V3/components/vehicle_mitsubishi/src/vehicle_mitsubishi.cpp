@@ -61,6 +61,8 @@
 ;       - Get Trip A/B value
 ;     1.0.11
 ;       - Calculate trip distance from TripB, more accurate than odometer 100m vs 1000m
+;     1.0.12
+;       - Supply new standard metrics
 ;
 ;    (C) 2011         Michael Stegen / Stegen Electronics
 ;    (C) 2011-2018    Mark Webb-Johnson
@@ -135,7 +137,7 @@ OvmsVehicleMitsubishi::OvmsVehicleMitsubishi()
 
   set_odo = false;
 
-  v_c_efficiency->SetValue(0);
+  StdMetrics.ms_v_charge_efficiency->SetValue(0);
 
   if(POS_ODO > 0.0)
   {
@@ -459,11 +461,11 @@ void OvmsVehicleMitsubishi::IncomingFrameCan1(CAN_frame_t* p_frame)
           StandardMetrics.ms_v_charge_current->SetValue(d[6] / 10.0, Amps);
         }
 
-        v_c_power_ac->SetValue((StandardMetrics.ms_v_charge_voltage->AsFloat() * StandardMetrics.ms_v_charge_current->AsFloat()) / 1000, kW);
+        StdMetrics.ms_v_charge_power->SetValue((StandardMetrics.ms_v_charge_voltage->AsFloat() * StandardMetrics.ms_v_charge_current->AsFloat()) / 1000, kW);
         if ( (StdMetrics.ms_v_charge_voltage->AsInt() > 0) && (StdMetrics.ms_v_charge_current->AsFloat() > 0.0) )
         {
           StandardMetrics.ms_v_charge_inprogress->SetValue(true);
-          StandardMetrics.ms_v_charge_kwh->SetValue(StandardMetrics.ms_v_charge_kwh->AsFloat() + (v_c_power_ac->AsFloat() / 36000.0));
+          StandardMetrics.ms_v_charge_kwh->SetValue(StandardMetrics.ms_v_charge_kwh->AsFloat() + (StdMetrics.ms_v_charge_power->AsFloat() / 36000.0));
           ms_v_charge_ac_kwh->SetValue(StandardMetrics.ms_v_charge_kwh->AsFloat());
         }
       break;
@@ -644,7 +646,7 @@ void OvmsVehicleMitsubishi::IncomingFrameCan1(CAN_frame_t* p_frame)
         //One or more door open except driver door
         bool door = false;
         ((d[2] & 1) != 0) ?  door = true : door = false ;
-
+        //((((d[2] & 1) != 0) && ((d[2] & 2) == 0))) ?  door = true : door = false ;
           StandardMetrics.ms_v_door_fr->SetValue(door);
           StandardMetrics.ms_v_door_rl->SetValue(door);
           StandardMetrics.ms_v_door_rr->SetValue(door);
@@ -738,9 +740,9 @@ void OvmsVehicleMitsubishi::Ticker1(uint32_t ticker)
     StandardMetrics.ms_v_charge_current->SetValue(0.0);
     StandardMetrics.ms_v_bat_current->SetValue(0);
     StandardMetrics.ms_v_bat_power->SetValue(0);
-    v_c_power_ac->SetValue(0);
+    StdMetrics.ms_v_charge_power->SetValue(0);
     v_c_power_dc->SetValue(0);
-    v_c_efficiency->SetValue(0);
+    StdMetrics.ms_v_charge_efficiency->SetValue(0);
   }
 
   //Check only if 'transmission in park
@@ -810,7 +812,7 @@ void OvmsVehicleMitsubishi::Ticker1(uint32_t ticker)
             StandardMetrics.ms_v_charge_substate->SetValue("scheduledstop");
           }
 
-          v_c_power_ac->SetValue(0.0);  // Reset charge power meter
+          StdMetrics.ms_v_charge_power->SetValue(0.0);  // Reset charge power meter
           v_c_power_dc->SetValue(0.0);  // Reset charge power meter
           StandardMetrics.ms_v_charge_current->SetValue(0.0); //Reset charge current
           StandardMetrics.ms_v_charge_climit->SetValue(0.0); //Reset charge limit
@@ -832,14 +834,14 @@ void OvmsVehicleMitsubishi::Ticker1(uint32_t ticker)
         }
       }
 
-      //Efficiency calculation AC/DC
-      if ((v_c_power_dc->AsInt() <= 0) || (v_c_power_ac->AsInt() <= 0))
+      //Charge efficiency calculation AC/DC
+      if ((v_c_power_dc->AsInt() <= 0) || (StdMetrics.ms_v_charge_power->AsInt() <= 0))
       {
-        v_c_efficiency->SetValue(0,Percentage);
+        StdMetrics.ms_v_charge_efficiency->SetValue(0,Percentage);
       }
       else
       {
-        v_c_efficiency->SetValue((v_c_power_dc->AsFloat() / v_c_power_ac->AsFloat()) * 100, Percentage);
+        StdMetrics.ms_v_charge_efficiency->SetValue((v_c_power_dc->AsFloat() / StdMetrics.ms_v_charge_power->AsFloat()) * 100, Percentage);
       }
   } //Car in P "if" close
 
