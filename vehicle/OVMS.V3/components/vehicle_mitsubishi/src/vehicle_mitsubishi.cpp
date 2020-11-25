@@ -280,19 +280,17 @@ void OvmsVehicleMitsubishi::IncomingFrameCan1(CAN_frame_t* p_frame)
       {
         StandardMetrics.ms_v_charge_temp->SetValue((float)d[3] - 40);
         StandardMetrics.ms_v_inv_temp->SetValue((float)d[3] - 40);
-
+        ms_v_c_detection->SetValue(d[2]);
         //charger detection
         //if(d[0] == 14  && d[1] == 116 ) // charger connected
         if((d[1] & 32 ) != 0)
         {
           mi_SC = true;
-          if(d[2] == 100) //charging (d[2] <= 99 prepare charge?)
-          {
-            StandardMetrics.ms_v_charge_type->SetValue("Standard");
-            StandardMetrics.ms_v_charge_mode->SetValue("Type1");
-            StandardMetrics.ms_v_charge_climit->SetValue("14");
-            StandardMetrics.ms_v_charge_state->SetValue("charging");
-          }
+
+          StandardMetrics.ms_v_charge_type->SetValue("Standard");
+          StandardMetrics.ms_v_charge_mode->SetValue("Type1");
+          StandardMetrics.ms_v_charge_climit->SetValue("14");
+          StandardMetrics.ms_v_charge_state->SetValue("charging");
         }
         else
         {
@@ -925,7 +923,6 @@ void OvmsVehicleMitsubishi::vehicle_mitsubishi_car_on(bool isOn)
       ms_v_trip_park_soc_stop->SetValue(StandardMetrics.ms_v_bat_soc->AsFloat());
       ms_v_trip_park_time_stop->SetValue(StdMetrics.ms_m_timeutc->AsInt());
       PollSetState(0);
-      SaveTripHistory();
     }
 }
 
@@ -1082,41 +1079,4 @@ bool MI_Trip_Counter::Started()
 float MI_Trip_Counter::GetDistance()
 {
   return odo - odo_start;
-}
-/*
- * Save the trip to the history file.
- */
-void OvmsVehicleMitsubishi::SaveTripHistory()
-{
-        metric_unit_t rangeUnit = (MyConfig.GetParamValue("vehicle", "units.distance") == "M") ? Miles : Kilometers;
-
-        // Save trip to history file
-        uint64_t timeStamp = StdMetrics.ms_m_timeutc->AsInt()*(uint64_t)1000;
-        if( StdMetrics.ms_v_pos_odometer->AsFloat() > 0 && timeStamp > 0)
-        {
-                int time_start = ms_v_trip_park_time_start->AsInt();
-                int time_stop = ms_v_trip_park_time_stop->AsInt();
-                int distance = ms_v_pos_trip_park->AsFloat(rangeUnit);
-                float SoC_start = ms_v_trip_park_soc_start->AsFloat();
-                float Soc_Stop = ms_v_trip_park_soc_stop->AsFloat();
-                float energy_used = ms_v_trip_park_energy_used->AsFloat();
-                float energy_recd = ms_v_trip_park_energy_recd->AsFloat();
-                float energy_total = energy_used - energy_recd;
-                float heat_energy = ms_v_trip_park_heating_kwh->AsFloat();
-                float ac_energy = ms_v_trip_park_ac_kwh->AsFloat();
-                float trip_cons1 = energy_total * 100 / ms_v_pos_trip_park->AsFloat(rangeUnit);;
-                float trip_cons2 = ms_v_pos_trip_park->AsFloat(rangeUnit) / energy_total;
-                int odometer = StdMetrics.ms_v_pos_odometer->AsFloat(rangeUnit);
-                int time = time_stop - time_start;
-                float avg_speed = (distance * 1000 / time) * 3.6;
-
-                FILE *sf = NULL;
-                sf = fopen(TRIP_HISTORY_DATA_PATH, "a");
-                if (sf == NULL)
-                {
-                        return;
-                }
-                fprintf(sf, "%d,%d,%.3f,%d,%.1f,%.1f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%d\n",time_start, time_stop, avg_speed, distance, SoC_start, Soc_Stop, energy_used, energy_recd, energy_total, heat_energy, ac_energy, trip_cons1, trip_cons2, odometer);
-                fclose(sf);
-        }
 }

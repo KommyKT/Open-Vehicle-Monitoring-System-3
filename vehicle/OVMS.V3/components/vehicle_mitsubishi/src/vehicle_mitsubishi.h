@@ -96,11 +96,11 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     OvmsMetricFloat*  ms_v_charge_dc_kwh = MyMetrics.InitFloat("xmi.c.kwh.dc", 10, 0, kWh);
     OvmsMetricFloat*  ms_v_charge_ac_kwh = MyMetrics.InitFloat("xmi.c.kwh.ac", 10, 0, kWh);
     OvmsMetricFloat*  v_c_efficiency = MyMetrics.InitFloat("xmi.c.efficiency", 10, 0, Percentage);
-    OvmsMetricFloat*  v_c_power_ac = MyMetrics.InitFloat("xmi.c.power.ac", 10, 0, kW);
     OvmsMetricFloat*  v_c_power_dc = MyMetrics.InitFloat("xmi.c.power.dc", 10, 0, kW);
     OvmsMetricFloat*  v_c_time = MyMetrics.InitFloat("xmi.c.time", 10, 0, Seconds);
     OvmsMetricFloat*  v_c_soc_start = MyMetrics.InitFloat("xmi.c.soc.start", 10, 0, Percentage);
     OvmsMetricFloat*  v_c_soc_stop = MyMetrics.InitFloat("xmi.c.soc.stop", 10, 0, Percentage);
+    OvmsMetricInt*  ms_v_c_detection = MyMetrics.InitInt("xmi.c.detection", 10, 0);
 
     OvmsMetricFloat*  ms_v_env_heating_amp = MyMetrics.InitFloat("xmi.e.heating.amp", 10, 0, Amps);
     OvmsMetricFloat*  ms_v_env_heating_watt  = MyMetrics.InitFloat("xmi.e.heating.watt", 10, 0, Watts);
@@ -138,7 +138,6 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     OvmsMetricFloat* ms_v_bat_max_output = MyMetrics.InitFloat("xmi.v.bat.max.output", 10, 0, kW);
 
     void vehicle_mitsubishi_car_on(bool isOn);
-    void SaveTripHistory();
 
     int mi_start_time_utc;
 
