@@ -162,6 +162,7 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
 
     bool has_odo;
     bool set_odo;
+    bool has_trip;
 
   #ifdef CONFIG_OVMS_COMP_WEBSERVER
       // --------------------------------------------------------------------------

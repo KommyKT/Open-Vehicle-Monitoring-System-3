@@ -121,7 +121,14 @@ void OvmsVehicleMitsubishi::IncomingPollReply(canbus* bus, uint16_t type, uint16
             {
               tripb += ((int)data[1] << 16 ) + ((int)data[0] << 8);
               ms_v_trip_B->SetValue(tripb/10.0, Kilometers);
-              tripb = 0;
+              if(tripb/10.0 > 0.1){
+                has_trip = true;
+              }
+              else
+              {
+                has_trip = false;
+              }
+              tripb = 0.0;
               break;
             }
             default:
