@@ -114,6 +114,7 @@ void OvmsVehicle::IncomingPollError(canbus* bus, uint16_t type, uint16_t pid, ui
  */
 void OvmsVehicle::PollSetPidList(canbus* bus, const poll_pid_t* plist)
   {
+  OvmsRecMutexLock slock(&m_poll_single_mutex);
   OvmsRecMutexLock lock(&m_poll_mutex);
   m_poll_bus = bus;
   m_poll_bus_default = bus;
@@ -132,6 +133,7 @@ void OvmsVehicle::PollSetState(uint8_t state)
   {
   if ((state < VEHICLE_POLL_NSTATES)&&(state != m_poll_state))
     {
+    OvmsRecMutexLock slock(&m_poll_single_mutex);
     OvmsRecMutexLock lock(&m_poll_mutex);
     m_poll_state = state;
     m_poll_ticker = 0;
@@ -294,13 +296,13 @@ void OvmsVehicle::PollerSend(bool fromTicker)
         memcpy(&txdata[2], m_poll_plcur->args.data, datalen);
         }
 
-      m_poll_bus->Write(&txframe);
       m_poll_ml_frame = 0;
       m_poll_ml_offset = 0;
       m_poll_ml_remain = 0;
       m_poll_wait = 2;
       m_poll_plcur++;
       m_poll_sequence_cnt++;
+      m_poll_bus->Write(&txframe);
 
       return;
       }
@@ -485,8 +487,10 @@ void OvmsVehicle::PollerReceive(CAN_frame_t* frame, uint32_t msgid)
         m_poll_single_rxbuf = NULL;
         m_poll_single_rxdone.Give();
         }
-      // Forward:
-      IncomingPollError(frame->origin, m_poll_type, m_poll_pid, error_code);
+      else
+        {
+        IncomingPollError(frame->origin, m_poll_type, m_poll_pid, error_code);
+        }
       // abort:
       m_poll_ml_remain = 0;
       }
@@ -514,8 +518,10 @@ void OvmsVehicle::PollerReceive(CAN_frame_t* frame, uint32_t msgid)
         m_poll_single_rxdone.Give();
         }
       }
-    // Forward:
-    IncomingPollReply(frame->origin, m_poll_type, m_poll_pid, response_data, response_datalen, m_poll_ml_remain);
+    else
+      {
+      IncomingPollReply(frame->origin, m_poll_type, m_poll_pid, response_data, response_datalen, m_poll_ml_remain);
+      }
     }
   else
     {
@@ -629,7 +635,14 @@ int OvmsVehicle::PollSingleRequest(canbus* bus, uint32_t txid, uint32_t rxid,
   {
   if (!m_ready)
     return -1;
-  OvmsMutexLock slock(&m_poll_single_mutex, pdMS_TO_TICKS(timeout_ms));
+
+  if (!m_registeredlistener)
+    {
+    m_registeredlistener = true;
+    MyCan.RegisterListener(m_rxqueue);
+    }
+
+  OvmsRecMutexLock slock(&m_poll_single_mutex, pdMS_TO_TICKS(timeout_ms));
   if (!slock.IsLocked())
     return -1;
 
@@ -675,8 +688,9 @@ int OvmsVehicle::PollSingleRequest(canbus* bus, uint32_t txid, uint32_t rxid,
   uint32_t          p_ticker = m_poll_ticker;
 
   // start single poll:
-  m_poll_single_rxbuf = &response;
   PollSetPidList(bus, poll);
+  m_poll_single_rxdone.Take(0);
+  m_poll_single_rxbuf = &response;
   PollerSend(true);
   m_poll_mutex.Unlock();
 
@@ -688,6 +702,7 @@ int OvmsVehicle::PollSingleRequest(canbus* bus, uint32_t txid, uint32_t rxid,
   PollSetPidList(p_bus, p_list);
   m_poll_plcur = p_plcur;
   m_poll_ticker = p_ticker;
+  m_poll_single_rxbuf = NULL;
   m_poll_mutex.Unlock();
 
   return (rxok == pdFALSE) ? -1 : (int)m_poll_single_rxerr;
