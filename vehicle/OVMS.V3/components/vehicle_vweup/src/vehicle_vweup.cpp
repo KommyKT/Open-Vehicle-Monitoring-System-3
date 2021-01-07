@@ -190,7 +190,7 @@ bool OvmsVehicleVWeUp::SetFeature(int key, const char *value)
            }
         }
         n = atoi(value);
-        if (n < 16) value = "16";
+        if (n < 15) value = "15";
         if (n > 30) value = "30";
         MyConfig.SetParamValue("xvu", "cc_temp", value);
         return true;
@@ -229,7 +229,7 @@ void OvmsVehicleVWeUp::ConfigChanged(OvmsConfigParam *param)
     vweup_enable_obd = MyConfig.GetParamValueBool("xvu", "con_obd", true);
     vweup_enable_t26 = MyConfig.GetParamValueBool("xvu", "con_t26", true);
     vweup_enable_write = MyConfig.GetParamValueBool("xvu", "canwrite", false);
-    vweup_cc_temp_int = MyConfig.GetParamValueInt("xvu", "cc_temp", 21);
+    vweup_cc_temp_int = MyConfig.GetParamValueInt("xvu", "cc_temp", 22);
     if (vweup_enable_t26)
         T26Init();    
     vweup_con = vweup_enable_obd * 2 + vweup_enable_t26;
@@ -238,10 +238,12 @@ void OvmsVehicleVWeUp::ConfigChanged(OvmsConfigParam *param)
         if (vweup_modelyear_new>2019) // set battery capacity & init calculated range
         {
             StandardMetrics.ms_v_bat_range_ideal->SetValue((260 * StandardMetrics.ms_v_bat_soc->AsFloat()) / 100.0); // This is dirty. Based on WLTP only. Should be based on SOH.
+            StandardMetrics.ms_v_charge_climit->SetValue(32); // set max charge current to max possible for now
         }
         else
         {
             StandardMetrics.ms_v_bat_range_ideal->SetValue((160 * StandardMetrics.ms_v_bat_soc->AsFloat()) / 100.0); // This is dirty. Based on WLTP only. Should be based on SOH.
+            StandardMetrics.ms_v_charge_climit->SetValue(16); // set max charge current to max possible for now
         }
         OBDInit();
         #ifdef CONFIG_OVMS_COMP_WEBSERVER
