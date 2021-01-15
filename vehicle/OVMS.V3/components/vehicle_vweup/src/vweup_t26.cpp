@@ -231,11 +231,13 @@ void OvmsVehicleVWeUp::IncomingFrameCan3(CAN_frame_t *p_frame)
       if ((!StandardMetrics.ms_v_env_on->AsBool()) || (vweup_con == 0)) {
         StandardMetrics.ms_v_bat_soc->SetValue(d[7] / 2.0);
       }
-      if (vweup_modelyear >= 2020) {
-        StandardMetrics.ms_v_bat_range_ideal->SetValue((260 * (d[7] / 2.0)) / 100.0); // This is dirty. Based on WLTP only. Should be based on SOH.
-      }
-      else {
-        StandardMetrics.ms_v_bat_range_ideal->SetValue((160 * (d[7] / 2.0)) / 100.0); // This is dirty. Based on WLTP only. Should be based on SOH.
+      if (HasNoOBD()) {
+        if (vweup_modelyear >= 2020) {
+          StandardMetrics.ms_v_bat_range_ideal->SetValue((260 * (d[7] / 2.0)) / 100.0); // This is dirty. Based on WLTP only. Should be based on SOH.
+        }
+        else {
+          StandardMetrics.ms_v_bat_range_ideal->SetValue((160 * (d[7] / 2.0)) / 100.0); // This is dirty. Based on WLTP only. Should be based on SOH.
+        }
       }
       break;
 
@@ -350,6 +352,10 @@ void OvmsVehicleVWeUp::IncomingFrameCan3(CAN_frame_t *p_frame)
       else {
         StandardMetrics.ms_v_env_hvac->SetValue(false);
       }
+      break;
+
+    case 0x571: // 12 Volt
+      StandardMetrics.ms_v_bat_12v_voltage->SetValue(5 + (0.05 * d[0]));
       break;
 
     case 0x61C: // Charge detection
