@@ -120,7 +120,7 @@ OvmsVehicleFactory::OvmsVehicleFactory()
       " add -e to use ISO-TP extended addressing (19 bit IDs).\n"
       "<request> is the hex string of the request type + arguments,"
       " e.g. '223a4b' = read data from PID 0x3a4b.\n"
-      "Default timeout is 3000 ms.",
+      "Default timeout is 100 ms.",
       3, 5);
     cmd_obdreq->RegisterCommand(
       "broadcast", "Send OBD2/UDS request as broadcast", obdii_request,
@@ -129,7 +129,7 @@ OvmsVehicleFactory::OvmsVehicleFactory()
       "Note: only the first response will be shown, enable CAN log to check for more.\n"
       "<request> is the hex string of the request type + arguments,"
       " e.g. '223a4b' = read data from PID 0x3a4b.\n"
-      "Default timeout is 3000 ms.",
+      "Default timeout is 100 ms.",
       1, 2);
     }
 
@@ -536,6 +536,7 @@ void OvmsVehicle::VehicleTicker1(std::string event, void* data)
 
   m_ticker++;
 
+  PollerStateTicker();
   PollerSend(true);
 
   Ticker1(m_ticker);
@@ -940,10 +941,10 @@ OvmsVehicle::vehicle_command_t OvmsVehicle::CommandStat(int verbosity, OvmsWrite
   metric_unit_t rangeUnit = (MyConfig.GetParamValue("vehicle", "units.distance") == "M") ? Miles : Kilometers;
 
   bool chargeport_open = StdMetrics.ms_v_door_chargeport->AsBool();
-  if (chargeport_open)
+  std::string charge_state = StdMetrics.ms_v_charge_state->AsString();
+  if (chargeport_open && charge_state != "")
     {
     std::string charge_mode = StdMetrics.ms_v_charge_mode->AsString();
-    std::string charge_state = StdMetrics.ms_v_charge_state->AsString();
     bool show_details = !(charge_state == "done" || charge_state == "stopped");
 
     // Translate mode codes:
@@ -970,13 +971,18 @@ OvmsVehicle::vehicle_command_t OvmsVehicle::CommandStat(int verbosity, OvmsWrite
     else if (charge_state == "stopped")
       charge_state = "Charge Stopped";
 
-    writer->printf("%s - %s\n", charge_mode.c_str(), charge_state.c_str());
+    if (charge_mode != "")
+      writer->printf("%s - ", charge_mode.c_str());
+    writer->printf("%s\n", charge_state.c_str());
 
     if (show_details)
       {
-      writer->printf("%s/%s\n",
-        (char*) StdMetrics.ms_v_charge_voltage->AsUnitString("-", Native, 1).c_str(),
-        (char*) StdMetrics.ms_v_charge_current->AsUnitString("-", Native, 1).c_str());
+      if (StdMetrics.ms_v_charge_voltage->AsFloat() > 0 || StdMetrics.ms_v_charge_current->AsFloat() > 0)
+        {
+        writer->printf("%s/%s\n",
+          (char*) StdMetrics.ms_v_charge_voltage->AsUnitString("-", Native, 1).c_str(),
+          (char*) StdMetrics.ms_v_charge_current->AsUnitString("-", Native, 1).c_str());
+        }
 
       int duration_full = StdMetrics.ms_v_charge_duration_full->AsInt();
       if (duration_full > 0)
@@ -993,6 +999,18 @@ OvmsVehicle::vehicle_command_t OvmsVehicle::CommandStat(int verbosity, OvmsWrite
         writer->printf("%s: %d mins\n",
           (char*) StdMetrics.ms_v_charge_limit_range->AsUnitString("Range", rangeUnit, 0).c_str(),
           duration_range);
+      }
+
+    // Energy sums:
+    if (StdMetrics.ms_v_charge_kwh_grid->IsDefined())
+      {
+      writer->printf("Drawn: %s\n",
+        StdMetrics.ms_v_charge_kwh_grid->AsUnitString("-", Native, 1).c_str());
+      }
+    if (StdMetrics.ms_v_charge_kwh->IsDefined())
+      {
+      writer->printf("Charged: %s\n",
+        StdMetrics.ms_v_charge_kwh->AsUnitString("-", Native, 1).c_str());
       }
     }
   else

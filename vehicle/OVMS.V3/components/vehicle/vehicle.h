@@ -216,6 +216,9 @@ class OvmsVehicle : public InternalRamAllocated
     virtual void IncomingFrameCan2(CAN_frame_t* p_frame);
     virtual void IncomingFrameCan3(CAN_frame_t* p_frame);
     virtual void IncomingFrameCan4(CAN_frame_t* p_frame);
+
+  protected:
+    virtual void PollerStateTicker();
     virtual void IncomingPollReply(canbus* bus, uint16_t type, uint16_t pid, uint8_t* data, uint8_t length, uint16_t mlremain);
     virtual void IncomingPollError(canbus* bus, uint16_t type, uint16_t pid, uint16_t code);
 
@@ -439,10 +442,10 @@ class OvmsVehicle : public InternalRamAllocated
     void PollSetResponseSeparationTime(uint8_t septime);
     int PollSingleRequest(canbus* bus, uint32_t txid, uint32_t rxid,
                       std::string request, std::string& response,
-                      int timeout_ms=3000, uint8_t protocol=ISOTP_STD);
+                      int timeout_ms=100, uint8_t protocol=ISOTP_STD);
     int PollSingleRequest(canbus* bus, uint32_t txid, uint32_t rxid,
                       uint8_t polltype, uint16_t pid, std::string& response,
-                      int timeout_ms=3000, uint8_t protocol=ISOTP_STD);
+                      int timeout_ms=100, uint8_t protocol=ISOTP_STD);
 
   private:
     CanFrameCallback  m_poll_txcallback;      // Poller CAN TxCallback
