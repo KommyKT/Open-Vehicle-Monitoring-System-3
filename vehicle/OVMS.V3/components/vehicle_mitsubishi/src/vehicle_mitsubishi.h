@@ -112,7 +112,7 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     OvmsMetricFloat*  ms_v_trip_consumption1 = MyMetrics.InitFloat("xmi.v.trip.consumption.KWh/100km", 10, 0, Other);
     OvmsMetricFloat*  ms_v_trip_consumption2 = MyMetrics.InitFloat("xmi.v.trip.consumption.km/kWh", 10, 0, Other);
 
-    OvmsMetricFloat*  ms_v_pos_trip_park = MyMetrics.InitFloat("xmi.e.trip.park", 10, 0, Kilometers);
+    OvmsMetricFloat*  ms_v_pos_trip_park = MyMetrics.InitFloat("xmi.e.trip.park", 10, 0, Kilometers, true);
     OvmsMetricFloat*  ms_v_trip_park_energy_used = MyMetrics.InitFloat("xmi.e.trip.park.energy.used", 10, 0, kWh);
     OvmsMetricFloat*  ms_v_trip_park_energy_recd = MyMetrics.InitFloat("xmi.e.trip.park.energy.recuperated", 10, 0, kWh);
     OvmsMetricFloat*  ms_v_trip_park_heating_kwh = MyMetrics.InitFloat("xmi.e.trip.park.heating.kwh",10, 0, kWh);
@@ -131,7 +131,7 @@ class OvmsVehicleMitsubishi : public OvmsVehicle
     OvmsMetricFloat*  ms_v_trip_charge_soc_stop = MyMetrics.InitFloat("xmi.e.trip.charge.soc.stop", 10, 0, Percentage);
 
     OvmsMetricFloat* ms_v_trip_A = MyMetrics.InitFloat("xmi.e.trip.A", 10, 0, Kilometers);
-    OvmsMetricFloat* ms_v_trip_B = MyMetrics.InitFloat("xmi.e.trip.B", 10, 0, Kilometers);
+    OvmsMetricFloat* ms_v_trip_B = MyMetrics.InitFloat("xmi.e.trip.B", 10, 0, Kilometers, true);
 
     OvmsMetricFloat* ms_v_bat_cac_rem = MyMetrics.InitFloat("xmi.v.bat.cac.rem", 10, 0, AmpHours);
     OvmsMetricFloat* ms_v_bat_max_input = MyMetrics.InitFloat("xmi.v.bat.max.input", 10, 0, kW);

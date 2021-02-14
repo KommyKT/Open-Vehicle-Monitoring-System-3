@@ -63,6 +63,9 @@
 ;       - Calculate trip distance from TripB, more accurate than odometer 100m vs 1000m
 ;     1.0.12
 ;       - Supply new standard metrics
+;     1.0.13
+;       - Persist metrics fix
+;       - Fix charge metrics if crash below charge session
 ;
 ;    (C) 2011         Michael Stegen / Stegen Electronics
 ;    (C) 2011-2018    Mark Webb-Johnson
@@ -98,7 +101,7 @@
 #include "ovms_notify.h"
 #include <sys/param.h>
 
-#define VERSION "1.0.11"
+#define VERSION "1.0.13"
 
 static const char *TAG = "v-mitsubishi";
 
@@ -117,16 +120,21 @@ static const OvmsVehicle::poll_pid_t vehicle_mitsubishi_polls[] =
 OvmsVehicleMitsubishi::OvmsVehicleMitsubishi()
 {
   ESP_LOGI(TAG, "Start Mitsubishi iMiev, Citroen C-Zero, Peugeot iOn vehicle module");
-
+/*
   StandardMetrics.ms_v_env_parktime->SetValue(0);
   StandardMetrics.ms_v_charge_type->SetValue("None");
   StandardMetrics.ms_v_bat_energy_used->SetValue(0);
   StandardMetrics.ms_v_bat_energy_recd->SetValue(0);
+  */
+  if(ms_v_trip_park_energy_used->AsFloat() == 0.0){
+    ms_v_trip_park_energy_used->SetValue(StandardMetrics.ms_v_bat_energy_used->AsFloat());
+    ms_v_trip_park_energy_recd->SetValue(StandardMetrics.ms_v_bat_energy_recd->AsFloat());
+  }
   memset(m_vin, 0, sizeof(m_vin));
 
   mi_start_time_utc = StandardMetrics.ms_m_timeutc->AsInt();
   StandardMetrics.ms_v_charge_inprogress->SetAutoStale(30);    //Set autostale to 30 second
-
+  /*
   ms_v_charge_ac_kwh->SetValue(0);
   ms_v_charge_dc_kwh->SetValue(0);
 
@@ -134,7 +142,7 @@ OvmsVehicleMitsubishi::OvmsVehicleMitsubishi()
   ms_v_trip_park_energy_used->SetValue(0);
   ms_v_trip_park_heating_kwh->SetValue(0);
   ms_v_trip_park_ac_kwh->SetValue(0);
-
+*/
   set_odo = false;
   has_trip = false;
   mi_SC = false;
@@ -165,12 +173,12 @@ OvmsVehicleMitsubishi::OvmsVehicleMitsubishi()
  }*/
 
   // reset charge counter
-
+/*
   ms_v_trip_charge_energy_recd->SetValue(0);
   ms_v_trip_charge_energy_used->SetValue(0);
   ms_v_trip_charge_heating_kwh->SetValue(0);
   ms_v_trip_charge_ac_kwh->SetValue(0);
-
+*/
   RegisterCanBus(1,CAN_MODE_ACTIVE,CAN_SPEED_500KBPS);
   PollSetPidList(m_can1,vehicle_mitsubishi_polls);
   PollSetState(0);
@@ -181,19 +189,19 @@ OvmsVehicleMitsubishi::OvmsVehicleMitsubishi()
 
   //80 or 88 cell car.
   cfg_newcell =  MyConfig.GetParamValueBool("xmi", "newcell", false);
-
+/*
   if (cfg_newcell)
   {
     BmsSetCellArrangementVoltage(80, 8);
     BmsSetCellArrangementTemperature(60, 6);
   }
   else
-  {
+  {*/
     BmsSetCellArrangementVoltage(88, 8);
     BmsSetCellArrangementTemperature(66, 6);
-  }
+  //}
 
-  BmsSetCellLimitsVoltage(2.52, 4.9);
+  BmsSetCellLimitsVoltage(2.52, 4.3);
   BmsSetCellLimitsTemperature(-30, 60);
 
   #ifdef CONFIG_OVMS_COMP_WEBSERVER
@@ -341,12 +349,12 @@ void OvmsVehicleMitsubishi::IncomingFrameCan1(CAN_frame_t* p_frame)
               StandardMetrics.ms_v_vin->SetValue(m_vin);
             }
           }
-/*
-          if (m_vin[0] == 'V' && m_vin[1] == 'F' && m_vin[7] == 'Y'){
+
+          if (m_vin[0] == 'V' && m_vin[1] == 'F' && m_vin[9] == 'D'){
             BmsSetCellArrangementVoltage(80, 8);
             BmsSetCellArrangementTemperature(60, 6);
           }
-*/
+
       break;
       }
 
