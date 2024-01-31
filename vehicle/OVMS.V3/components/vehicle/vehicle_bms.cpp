@@ -736,7 +736,7 @@ void OvmsVehicle::BmsStatus(int verbosity, OvmsWriter* writer, vehicle_bms_statu
           {
           if (kt < m_bms_readings_t && (reading_left_t > 0))
             {
-            writer->printf(" %5.1f%s",UnitConvert(Celcius, user_temp, m_bms_temperatures[kt]), temp_unit.c_str());
+            writer->printf("%5.1f%s",UnitConvert(Celcius, user_temp, m_bms_temperatures[kt]), temp_unit.c_str());
             --reading_left_t;
             ++kt;
             }
