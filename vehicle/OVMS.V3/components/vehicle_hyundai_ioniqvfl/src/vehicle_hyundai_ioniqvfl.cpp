@@ -5,7 +5,6 @@
 ;
 ;    Changes:
 ;    1.0  Initial release
-;    1.0.1 Set polling to 0 in car Off State, because no response from ECU      
 ;
 ;    (c) 2021       Michael Balzer <dexter@dexters-web.de>
 ;
@@ -66,7 +65,7 @@ static const char *TAG = "v-hyundaivfl";
 static const OvmsPoller::poll_pid_t standard_polls[] =
 {
   //                                    OFF  AWK  DRV  CHG
-  { 0x7e4, 0x7ec, UDS_READ8,    0x01, {   0,   1,   1,   1 }, 0, ISOTP_STD },  // Battery status, speed, module temperatures 1-5
+  { 0x7e4, 0x7ec, UDS_READ8,    0x01, {   1,   1,   1,   1 }, 0, ISOTP_STD },  // Battery status, speed, module temperatures 1-5
   { 0x7e4, 0x7ec, UDS_READ8,    0x02, {   0,  15,  15,  15 }, 0, ISOTP_STD },  // Cell voltages 1-32
   { 0x7e4, 0x7ec, UDS_READ8,    0x03, {   0,  15,  15,  15 }, 0, ISOTP_STD },  // Cell voltages 33-64
   { 0x7e4, 0x7ec, UDS_READ8,    0x04, {   0,  15,  15,  15 }, 0, ISOTP_STD },  // Cell voltages 65-96
