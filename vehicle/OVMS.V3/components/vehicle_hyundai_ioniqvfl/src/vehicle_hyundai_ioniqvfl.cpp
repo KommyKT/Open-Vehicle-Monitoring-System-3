@@ -73,6 +73,8 @@ static const OvmsPoller::poll_pid_t standard_polls[] =
   { 0x7e6, 0x7ee, UDS_READ8,    0x80, {   0,  60,  60, 120 }, 0, ISOTP_STD },  // Ambient temperature
   { 0x7c6, 0x7ce, UDS_READ16, 0xb002, {   0, 120,  30,   0 }, 0, ISOTP_STD },  // Odometer
   { 0x7a0, 0x7a8, UDS_READ16, 0xc00b, {   0,  60,  60,   0 }, 0, ISOTP_STD },  // TPMS
+  { 0x7e2, 0x7ea, UDS_READ16, 0x1A80, {   0,  60,  60,   0 }, 0, ISOTP_STD },  // Vin
+  { 0x7e2, 0x7ea, UDS_READ8,    0x01, {   0,  60,  60,   0 }, 0, ISOTP_STD },  // Vin
   //                                    OFF  AWK  DRV  CHG
   POLL_LIST_END
 };
@@ -275,7 +277,7 @@ void OvmsVehicleHyundaiVFL::IncomingPollReply(const OvmsPoller::poll_job_t &job,
       else {
         StdMetrics.ms_v_charge_type->SetValue("");
       }
-
+      m_xhi_aux_12v_battery->SetValue(RXB_BYTE(29) * 0.1f);
       StdMetrics.ms_v_bat_coulomb_recd_total->SetValue(RXB_UINT32(30) * 0.1f);
       StdMetrics.ms_v_bat_coulomb_used_total->SetValue(RXB_UINT32(34) * 0.1f);
       StdMetrics.ms_v_bat_energy_recd_total->SetValue(RXB_UINT32(38) * 0.1f);
