@@ -101,6 +101,19 @@ class OvmsVehicleHyundaiVFL : public OvmsVehicle
 
     // Charge phase detection:
     float               m_charge_lastsoc = 0;
+
+  protected:
+    void Ticker1(uint32_t ticker) override;
+
+  private:
+    void UpdateSleepGate();
+
+    uint32_t m_wake_until    = 120;
+    uint32_t m_v12_low_since = 0;
+    bool     m_v12_high      = false;
+    bool     m_polling       = true;
+    float    m_v12_min       = 99.0f;   // gördülő minimum
+    uint32_t m_v12_min_time  = 0;
 };
 
 #endif // __VEHICLE_HYUNDAI_IONIQVFL_H__

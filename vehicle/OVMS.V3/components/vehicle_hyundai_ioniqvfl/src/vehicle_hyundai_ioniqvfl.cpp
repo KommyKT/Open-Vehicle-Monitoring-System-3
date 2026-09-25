@@ -35,6 +35,7 @@ static const char *TAG = "v-hyundaivfl";
 #include "vehicle_hyundai_ioniqvfl.h"
 #ifdef CONFIG_OVMS_COMP_WEBSERVER
 #include "ovms_webserver.h"
+#include "ovms.h"   // monotonictime
 #endif
 
 // RX buffer access macros: b=byte#
@@ -48,6 +49,13 @@ static const char *TAG = "v-hyundaivfl";
 #define RXB_INT16(b)          ((int16_t)RXB_UINT16(b))
 #define RXB_INT32(b)          ((int32_t)RXB_UINT32(b))
 
+#define V12_ON           13.3f
+#define V12_OFF          13.0f
+#define V12_RISE         0.4f   // ekkora ugrás is ébreszt
+#define V12_MIN_WINDOW_S 60
+#define V12_OFF_DELAY_S  120
+
+static const OvmsPoller::poll_pid_t no_polls[] = { POLL_LIST_END };
 
 /**
  * OvmsVehicleHyundaiVFL PID list
@@ -553,6 +561,51 @@ void OvmsVehicleHyundaiVFL::Ticker60(uint32_t ticker)
   UpdateChargeTimes();
 }
 
+void OvmsVehicleHyundaiVFL::Ticker1(uint32_t ticker)
+{
+  UpdateSleepGate();
+}
+
+void OvmsVehicleHyundaiVFL::UpdateSleepGate()
+{
+  uint32_t now = monotonictime;
+  float v12    = StandardMetrics.ms_v_bat_12v_voltage->AsFloat();
+  if (v12 < 5.0f) return;   // még nincs érvényes mérés
+
+  // Gördülő minimum az emelkedés-detektáláshoz
+  if (v12 < m_v12_min || now - m_v12_min_time >= V12_MIN_WINDOW_S) {
+    m_v12_min = v12;
+    m_v12_min_time = now;
+  }
+  bool rise = (v12 - m_v12_min) >= V12_RISE;
+
+  // Hiszterézis, késleltetett lekapcsolással
+  if (v12 >= V12_ON || rise) {
+    m_v12_high = true;
+    m_v12_low_since = 0;
+  }
+  else if (v12 < V12_OFF && m_v12_high) {
+    if (m_v12_low_since == 0)
+      m_v12_low_since = now;
+    else if (now - m_v12_low_since >= V12_OFF_DELAY_S)
+      m_v12_high = false;
+  }
+
+  bool env_on   = StandardMetrics.ms_v_env_on->AsBool();
+  bool charging = StandardMetrics.ms_v_charge_inprogress->AsBool();
+  bool want     = m_v12_high || env_on || charging || (now < m_wake_until);
+
+  if (want && !m_polling) {
+    m_polling = true;
+    ESP_LOGI(TAG, "SleepGate: WAKE (v12=%.2f rise=%d)", v12, rise);
+    PollSetPidList(m_can1, standard_polls);
+  }
+  else if (!want && m_polling) {
+    m_polling = false;
+    ESP_LOGI(TAG, "SleepGate: SLEEP (v12=%.2f)", v12);
+    PollSetPidList(m_can1, no_polls);
+  }
+}
 
 /**
  * ResetTripCounters: called at trip start to set reference points
